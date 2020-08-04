@@ -190,7 +190,7 @@ def map_cells(cells):
     for x in cells:
         cell_type = "DFF"
         if cells[x][2] == []:
-            print("YOO THIS GAME IS TRASH")
+            print("Not Sequential")
         else:
             for y in cells[x][2]:
                 if y == "!CL":#SHOULD BE !CLK_N SOMETHING WRONG IN GET_SEQUENTIAL
