@@ -13,7 +13,7 @@ def parser(x):
         s = get_sequential(lines,a)
         l = get_latch(lines, a) 
         the_cells = make_cells(z,y,footprints, s, l)
-        print(the_cells)
+        #print(the_cells)
         map_cells(the_cells)
         
         
@@ -70,7 +70,23 @@ def get_function_names(lib_file, cell_positions):
                     function_count=function_count+1
                     function_end = a.find('";')
                     f = a[b+13:function_end]
-                    eachcell_function.append(f)
+                    #print(f)
+                    new_f = ""
+                    for letter in f:
+                        if letter != " ":
+                            new_f = new_f+letter
+                            #print("")
+                            
+
+                    p_list = []
+                    for letter in new_f:
+                        if letter == "(" or letter == ")":
+                            p_list.append(letter)
+                
+
+                    if new_f[0] == "(" and new_f[len(new_f)-1] == ")" and len(p_list) < 3:
+                        new_f = new_f[1:len(new_f)-1]
+                    eachcell_function.append(new_f)
         if function_found == False:
             function_names.append("No function")
         else:
@@ -142,7 +158,7 @@ def get_sequential(lib_file, cell_positions):
                     seq_info.append(x[y+14:state_end])
         
         sequential_cells.append(seq_info)
-    print(sequential_cells)
+    #print(sequential_cells)
     return sequential_cells
                     
 def get_latch(lib_file, cell_positions):
@@ -177,7 +193,7 @@ def get_latch(lib_file, cell_positions):
                     latch_enable_end = x.find('";')
                     latch_info.append(x[y+10:latch_enable_end])
         latch_cells.append(latch_info)
-    print(latch_cells)
+    #print(latch_cells)
     return(latch_cells) 
                 
     
@@ -198,10 +214,25 @@ def make_cells(cells, functions, footprints, sequential, latch):
         
         
 def map_cells(cells):
+    file_gate = open("gate_list.txt")
+    gates = file_gate.readlines()
+    print(cells) 
     for x in cells:
         
         if cells[x][2] == [] and cells[x][3] == []:
-            print("Print not sequential/latch")
+            #print("Print not sequential/latch")
+            for name in gates:
+                length = len(name)
+                #print(length)
+                for y in range(length):
+                     if name[y:y+2] == 'Y=':
+                         if cells[x][0][0] == name[y+2:length-1]:
+                             
+                             cell_name_end = name.find(" ")
+                             print(x + " is a " + name[:cell_name_end])
+                         
+                
+            
         elif cells[x][3] != []:
             cell_type = "LATCH"
             for y in cells[x][3]:
@@ -216,7 +247,7 @@ def map_cells(cells):
             for y in cells[x][3]:
                 if y == '"IQ","IQ_N':
                     cell_type+='Q'
-            print(cell_type)
+            print(x + " is a " + cell_type)
         else:
             cell_type = "DFF"
             for y in cells[x][2]:
@@ -232,7 +263,7 @@ def map_cells(cells):
                 if y == '"IQ","IQ_N':
                     cell_type+='Q'
                 
-            print(cell_type)
+            print(x + " is a " + cell_type)
             
                 
     
