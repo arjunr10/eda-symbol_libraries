@@ -1,5 +1,13 @@
 global the_cells
-
+def read(x):#For TESTING PURPOSES
+    file = open(x)
+    file2 = open(x)
+    lines = file.readlines()
+    print(lines)
+    #print(lines.index('        pin ("A") {\n'))
+    #a = "hello"
+    #b = a.replace('e' , '')
+    #print(b)
 def parser(x):
     file = open(x)
     file2 = open(x)
@@ -11,8 +19,10 @@ def parser(x):
         
         footprints = get_footprint(lines, a)
         s = get_sequential(lines,a)
-        l = get_latch(lines, a) 
-        the_cells = make_cells(z,y,footprints, s, l)
+        l = get_latch(lines, a)
+        pins = get_pin(lines, a)
+        print(pins)
+        the_cells = make_cells(z,y,footprints, s, l, pins)
         #print(the_cells)
         map_cells(the_cells)
         
@@ -195,25 +205,60 @@ def get_latch(lib_file, cell_positions):
         latch_cells.append(latch_info)
     #print(latch_cells)
     return(latch_cells) 
-                
+
+def get_pin(lib_file, cell_positions):
+    pin_cells = []
+    lines = lib_file
+    cell_divisions = cell_positions
+    isComment = False
+    for p in range(len(cell_divisions)-1):
+        pin_info = [[],[]]
+        for x in lines[cell_divisions[p]:cell_divisions[p+1]]:
+            length = len(x)
+            for y in range(length):
+                if x[y:y+2] == '/*':
+                    isComment = True
+                if x[y:y+2] == '*/':
+                    isComment = False
+                if x[y:y+7] == ' pin ("' and isComment == False:
+                    direction_found = False
+                    #print("hi")
+                    pin_end = x.find('")')
+                    for c in lines[lines.index(x):cell_divisions[p+1]]:
+                        line_length = len(c)
+                        direction = ""
+                        for b in range(line_length):
+                            if c[b:b+13] == 'direction : "' and isComment == False and direction_found == False:
+                                direction_found = True
+                                dir_end = c.find('";')
+                                direction = c[b+13:dir_end]
+                        if direction == "input":
+                            pin_info[0].append(x[y+7:pin_end])
+                        if direction == "output":
+                            pin_info[1].append(x[y+7:pin_end])
+        pin_cells.append(pin_info)
+    return pin_cells
+                    
     
                 
     
     
-def make_cells(cells, functions, footprints, sequential, latch):
+def make_cells(cells, functions, footprints, sequential, latch, pins):
    
     cell_dict = {}
     for x in cells:
         cell_info = []
-        cell_info.append(functions[cells.index(x)])
-        cell_info.append(footprints[cells.index(x)])
-        cell_info.append(sequential[cells.index(x)])
-        cell_info.append(latch[cells.index(x)])
+        cell_info.append(functions[cells.index(x)])#0
+        cell_info.append(footprints[cells.index(x)])#1
+        cell_info.append(sequential[cells.index(x)])#2
+        cell_info.append(latch[cells.index(x)])#3
+        cell_info.append(pins[cells.index(x)])#4
         cell_dict[x] = cell_info
     return cell_dict
         
         
 def map_cells(cells):
+    gate_type = {}
     file_gate = open("gate_list.txt")
     gates = file_gate.readlines()
     print(cells) 
@@ -228,8 +273,9 @@ def map_cells(cells):
                      if name[y:y+2] == 'Y=':
                          if cells[x][0][0] == name[y+2:length-1]:
                              
-                             cell_name_end = name.find(" ")
-                             print(x + " is a " + name[:cell_name_end])
+                             cell_name_end = name.find("\t")
+                             #print(x + " is a " + name[:cell_name_end])
+                             gate_type[x] = name[:cell_name_end]
                          
                 
             
@@ -247,7 +293,8 @@ def map_cells(cells):
             for y in cells[x][3]:
                 if y == '"IQ","IQ_N':
                     cell_type+='Q'
-            print(x + " is a " + cell_type)
+            #print(x + " is a " + cell_type)
+            gate_type[x] = cell_type
         else:
             cell_type = "DFF"
             for y in cells[x][2]:
@@ -263,9 +310,55 @@ def map_cells(cells):
                 if y == '"IQ","IQ_N':
                     cell_type+='Q'
                 
-            print(x + " is a " + cell_type)
+            #print(x + " is a " + cell_type)
+            gate_type[x] = cell_type
+    make_library(gate_type)
             
                 
+def make_library(gates):
+    print(gates)
+    library = open("Library_Gates.txt")
+    #library.close
+    lines = library.readlines()
+    library.close
+    path = 'C:\\Users\\arjun\\OneDrive\\Documents\\Comp Sci Internship\\Sample_Library\\Test1.kicad_sym'
+    sym = open(path, 'a')
     
     
-parser("sky130_Test2.lib")
+    for gate in gates:
+        sym_lines = []
+        #print(gates[gate])
+        for x in lines:
+            
+            if gates[gate] + "\n" == x:
+                
+                gate_start = lines.index(x)+1
+                gate_end = ""
+                found_end = False
+                print("NEW GATE START:")
+                print(gate_start)
+                count = 0
+                for c in lines[gate_start:]:
+                    #print(c)
+                    count = count+1
+                    if c == "END\n" and found_end == False:
+                        gate_end = lines[gate_start:].index(c)
+                        found_end = True
+                        
+                print(gate_start)
+                print(gate_end)
+                for a in lines[gate_start:gate_start+gate_end]:
+                    sym_lines.append(a)
+                    #sym.write(a)
+                for l in sym_lines:
+                    l = l.replace(gates[gate], gate)
+                    symw.write(l)
+                    
+                
+    sym.write(")")
+                        
+    
+        
+
+parser("sky130_Test3.lib")
+#read("Library_Gates.txt")
