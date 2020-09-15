@@ -24,7 +24,8 @@ def parser(x):
         print(pins)
         the_cells = make_cells(z,y,footprints, s, l, pins)
         #print(the_cells)
-        map_cells(the_cells)
+        g = map_cells(the_cells)
+        make_library(g, the_cells)
         
         
         
@@ -312,10 +313,11 @@ def map_cells(cells):
                 
             #print(x + " is a " + cell_type)
             gate_type[x] = cell_type
-    make_library(gate_type)
+    return gate_type
             
                 
-def make_library(gates):
+def make_library(gates, cells):
+    #global the_cells
     print(gates)
     library = open("Library_Gates.txt")
     #library.close
@@ -352,7 +354,27 @@ def make_library(gates):
                     #sym.write(a)
                 for l in sym_lines:
                     l = l.replace(gates[gate], gate)
-                    symw.write(l)
+                    #symw.write(l)
+                pin_count = 0
+                for t in range(len(sym_lines)):
+                    for p in range(len(sym_lines[t])):
+                        if sym_lines[t][p:p+14] == "pin input line":  
+                            print("GOT EM COACH")
+                            print(cells[gate][4][0][pin_count])
+                            
+                            #print(sym_lines[t+1])
+                            start = sym_lines[t+1].index('"')
+                            print(start)
+                            temp = sym_lines[t+1][:start+1]+ cells[gate][4][0][pin_count] + sym_lines[t+1][start+2:]
+                            #print(temp)
+                            sym_lines[t+1] = temp
+                            print(sym_lines[t+1])
+
+
+                            pin_count = pin_count+1
+                for line in sym_lines:
+                    sym.write(line)
+                
                     
                 
     sym.write(")")
@@ -360,5 +382,5 @@ def make_library(gates):
     
         
 
-parser("sky130_Test3.lib")
+parser("sky130_Test5.lib")
 #read("Library_Gates.txt")
